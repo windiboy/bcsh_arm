@@ -1,0 +1,8 @@
+prefix=/home/yang/my_ws/install
+
+Name: bcsh_moveit_config
+Description: Description of bcsh_moveit_config
+Version: 0.3.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

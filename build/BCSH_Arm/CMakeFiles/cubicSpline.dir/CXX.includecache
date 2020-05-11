@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/yang/my_ws/src/BCSH_Arm/include/cubicSpline.h
+
+/home/yang/my_ws/src/BCSH_Arm/src/cubicSpline.cpp
+string.h
+-
+stddef.h
+-
+stdio.h
+-
+../include/cubicSpline.h
+/home/yang/my_ws/src/BCSH_Arm/include/cubicSpline.h
+

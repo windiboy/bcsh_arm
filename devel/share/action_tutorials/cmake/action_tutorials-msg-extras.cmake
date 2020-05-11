@@ -1,0 +1,2 @@
+set(action_tutorials_MESSAGE_FILES "/home/yang/my_ws/devel/share/action_tutorials/msg/DoDishesAction.msg;/home/yang/my_ws/devel/share/action_tutorials/msg/DoDishesActionGoal.msg;/home/yang/my_ws/devel/share/action_tutorials/msg/DoDishesActionResult.msg;/home/yang/my_ws/devel/share/action_tutorials/msg/DoDishesActionFeedback.msg;/home/yang/my_ws/devel/share/action_tutorials/msg/DoDishesGoal.msg;/home/yang/my_ws/devel/share/action_tutorials/msg/DoDishesResult.msg;/home/yang/my_ws/devel/share/action_tutorials/msg/DoDishesFeedback.msg")
+set(action_tutorials_SERVICE_FILES "")

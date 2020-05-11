@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/yang/my_ws/src/BCSH_Arm/include/WzSerialPort.h
+
+/home/yang/my_ws/src/BCSH_Arm/src/WzSerialPort.cpp
+../include/WzSerialPort.h
+/home/yang/my_ws/src/BCSH_Arm/include/WzSerialPort.h
+iostream
+-
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+unistd.h
+-
+sys/types.h
+-
+sys/stat.h
+-
+fcntl.h
+-
+termios.h
+-
+errno.h
+-
+
