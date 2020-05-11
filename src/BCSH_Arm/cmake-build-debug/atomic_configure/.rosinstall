@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/yang/my_ws/src/BCSH_Arm/cmake-build-debug/devel/setup.sh

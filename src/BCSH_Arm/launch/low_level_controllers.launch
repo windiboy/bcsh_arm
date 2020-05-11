@@ -1,0 +1,8 @@
+<launch>
+    <param name="send_port" type="string" value="/dev/pts/4"/>
+    <param name="receive_port" type="string" value="/dev/pts/5"/>
+    <node name="bcsh_arm_driver" pkg="BCSH_Arm"
+          type="my_arm_servers" output="screen"/>
+<!--    <node name="bcsh_state_publisher" pkg="BCSH_Arm"-->
+<!--          type="joint_state_publish" output="screen"/>-->
+</launch>
