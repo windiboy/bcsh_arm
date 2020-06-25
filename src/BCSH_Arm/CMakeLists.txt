@@ -158,6 +158,10 @@ add_executable(joint_state_publish src/joint_state_publish.cpp)
 target_link_libraries(joint_state_publish ${catkin_LIBRARIES} WzSerialPort MotorDriver cubicSpline ${Boost_LIBRARIES})
 add_dependencies(joint_state_publish ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_library(ArmDriver src/ArmDriver.cpp)
+target_link_libraries(ArmDriver ${catkin_LIBRARIES} cubicSpline MotorDriver WzSerialPort Kinematics)
+add_dependencies(ArmDriver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_library(WzSerialPort src/WzSerialPort.cpp)
 target_link_libraries(WzSerialPort ${catkin_LIBRARIES})
 add_dependencies(WzSerialPort ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -165,6 +169,10 @@ add_dependencies(WzSerialPort ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 add_library(MotorDriver src/MotorDriver.cpp)
 target_link_libraries(MotorDriver ${catkin_LIBRARIES})
 add_dependencies(MotorDriver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_library(Kinematics src/Kinematics.cpp)
+target_link_libraries(Kinematics ${catkin_LIBRARIES})
+add_dependencies(Kinematics ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_library(cubicSpline src/cubicSpline.cpp)
 target_link_libraries(cubicSpline ${catkin_LIBRARIES})

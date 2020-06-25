@@ -10,7 +10,7 @@
 	示例：
 		参考 main.cpp	
 */
-
+typedef unsigned char uchar;
 class WzSerialPort
 {
 public:
@@ -24,7 +24,7 @@ public:
 	// databit(数据位): 4-8(windows),5-8(linux)，通常为8位
 	// stopbit(停止位): 1为1位停止位，2为2位停止位,3为1.5位停止位
 	// synchronizeflag(同步、异步,仅适用与windows): 0为异步，1为同步
-	bool open(const char* portname, int baudrate, char parity, char databit, char stopbit, char synchronizeflag=1);
+    bool open(const char* portname, int baudrate, char parity, char databit, char stopbit);
 
 	//关闭串口，参数待定
 	void close();
@@ -34,10 +34,18 @@ public:
 
 	//接受数据或读数据，成功返回读取实际数据的长度，失败返回0
 	int receive(void *buf,int maxlen);
-
+    //
+    void clear();
 private:
+
+
+
 	int pHandle[16];
+    int fd_serial;
+    void set_speed(int fd, int speed);
+    bool set_Parity(int fd,int databits,int stopbits,int parity);
 	char synchronizeflag;
+
 };
 
 #endif

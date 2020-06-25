@@ -2,7 +2,7 @@
 #include "../include/WzSerialPort.h"
 
 #include <iostream>
-
+#include<sys/file.h>
 #include <stdio.h>
 #include <stdlib.h>    
 #include <string.h>
@@ -12,6 +12,11 @@
 #include <fcntl.h>      
 #include <termios.h>  
 #include <errno.h>
+int speed_arr[] = {B1000000,B500000,B115200, B38400, B19200, B9600, B4800, B2400, B1200, B300};
+int name_arr[] = {1000000,500000,115200, 38400, 19200, 9600, 4800, 2400, 1200, 300};
+
+#define FALSE -1
+#define TRUE   0
 
 WzSerialPort::WzSerialPort()
 {
@@ -22,153 +27,193 @@ WzSerialPort::~WzSerialPort()
 
 }
 
-bool WzSerialPort::open(const char* portname, int baudrate, char parity, char databit, char stopbit, char synchronizeflag)
+int checkexit(const char* pfile)
 {
-    // 打开串口
-    pHandle[0] = -1;
-    // 以 读写、不阻塞 方式打开
-    pHandle[0] = ::open(portname,O_RDWR|O_NOCTTY|O_NONBLOCK);
-    
-    // 打开失败，则打印失败信息，返回false
-    if(pHandle[0] == -1)
+    if (pfile == NULL)
     {
-        std::cout << portname << " open failed , may be you need 'sudo' permission." << std::endl;
+        return -1;
+    }
+    int lockfd = ::open(pfile,O_RDWR);
+    if (lockfd == -1)
+    {
+        return -2;
+    }
+    int iret = flock(lockfd,LOCK_EX|LOCK_NB);
+    if (iret == -1)
+    {
+        return -3;
+    }
+
+    return 0;
+}
+//std::cout << portname << " open failed , may be you need 'sudo' permission." << std::endl;
+bool WzSerialPort::open(const char* portname, int baudrate, char parity, char databit, char stopbit)
+{
+//    if(checkexit(portname))
+//        return false;
+    fd_serial = ::open(portname,O_RDWR|O_NONBLOCK);
+
+    if(fd_serial==-1)
+    {
+        std::cout << portname << " open failed!" << std::endl;
+        return false;
+    }
+    else
+        std::cout << portname << " open success!" << std::endl;
+
+    if(flock(fd_serial,LOCK_EX|LOCK_NB)!=0)//lock port
+    {
+        std::cout << portname << " is used!" << std::endl;
+        ::close(fd_serial);
         return false;
     }
 
-    // 设置串口参数
-    // 创建串口参数对象
+    set_speed(fd_serial,baudrate);
+    if(!set_Parity(fd_serial,databit,stopbit,parity))
+    {
+        ::close(fd_serial);
+        return false;
+    }
+
+
+
+    return true;
+}
+
+void WzSerialPort::set_speed(int fd, int speed)
+{
+    unsigned int   i;
+    int   status;
+    struct termios   Opt;
+    tcgetattr(fd, &Opt);
+    for ( i= 0; i < sizeof(speed_arr) / sizeof(int); i++)
+    {
+        if (speed == name_arr[i])
+        {
+            tcflush(fd, TCIOFLUSH);
+            cfsetispeed(&Opt, speed_arr[i]);
+            cfsetospeed(&Opt, speed_arr[i]);
+            status = tcsetattr(fd, TCSANOW, &Opt);
+            if (status != 0)
+            {
+                perror("tcsetattr fd1");
+                return;
+            }
+            tcflush(fd,TCIOFLUSH);
+        }
+    }
+}
+/**
+*@brief   设置串口数据位，停止位和效验位
+*@param fd     类型 int 打开的串口文件句柄*
+*@param databits 类型 int 数据位   取值 为 7 或者8*
+*@param stopbits 类型 int 停止位   取值为 1 或者2*
+*@param parity 类型 int 效验类型 取值为N,E,O,,S
+*/
+bool WzSerialPort::set_Parity(int fd,int databits,int stopbits,int parity)
+{
     struct termios options;
-    // 先获得串口的当前参数
-    if(tcgetattr(pHandle[0],&options) < 0)
+    if ( tcgetattr( fd,&options) != 0)
     {
-        std::cout << portname << " open failed , get serial port attributes failed." << std::endl;
-        return false;
+        perror("SetupSerial 1");
+        return(FALSE);
     }
-
-    // 设置波特率
-    switch(baudrate)
+    options.c_cflag &= ~CSIZE;
+    switch (databits) /*设置数据位数*/
     {
-        case 4800:
-            cfsetispeed(&options,B4800);
-            cfsetospeed(&options,B4800);
-            break;
-        case 9600:
-            cfsetispeed(&options,B9600);
-            cfsetospeed(&options,B9600);
-            break;   
-        case 19200:
-            cfsetispeed(&options,B19200);
-            cfsetospeed(&options,B19200);
-            break;
-        case 38400:
-            cfsetispeed(&options,B38400);
-            cfsetospeed(&options,B38400);
-            break;
-        case 57600:
-            cfsetispeed(&options,B57600);
-            cfsetospeed(&options,B57600);
-            break;
-        case 115200:
-            cfsetispeed(&options,B115200);
-            cfsetospeed(&options,B115200);
-            break;
-        case 1000000:
-            cfsetispeed(&options,B1000000);
-            cfsetospeed(&options,B1000000);
-            break;
-        default:
-            std::cout << portname << " open failed , unkown baudrate , only support 4800,9600,19200,38400,57600,115200." << std::endl;
-            return false;
-    }
-
-    // 设置校验位
-    switch(parity)
-    {
-        // 无校验
-        case 0:
-            options.c_cflag &= ~PARENB;//PARENB：产生奇偶位，执行奇偶校验
-            options.c_cflag &= ~INPCK;//INPCK：使奇偶校验起作用
-            break;
-        // 设置奇校验
-        case 1:
-            options.c_cflag |= PARENB;//PARENB：产生奇偶位，执行奇偶校验
-            options.c_cflag |= PARODD;//PARODD：若设置则为奇校验,否则为偶校验
-            options.c_cflag |= INPCK;//INPCK：使奇偶校验起作用
-            options.c_cflag |= ISTRIP;//ISTRIP：若设置则有效输入数字被剥离7个字节，否则保留全部8位
-            break;
-        // 设置偶校验
-        case 2:
-            options.c_cflag |= PARENB;//PARENB：产生奇偶位，执行奇偶校验
-            options.c_cflag &= ~PARODD;//PARODD：若设置则为奇校验,否则为偶校验
-            options.c_cflag |= INPCK;//INPCK：使奇偶校验起作用
-            options.c_cflag |= ISTRIP;//ISTRIP：若设置则有效输入数字被剥离7个字节，否则保留全部8位
-            break;
-        default:
-            std::cout << portname << " open failed , unkown parity ." << std::endl;
-            return false;
-    }
-
-    // 设置数据位
-    switch(databit)
-    {
-        case 5:
-            options.c_cflag &= ~CSIZE;//屏蔽其它标志位
-            options.c_cflag |= CS5;
-            break;
-        case 6:
-            options.c_cflag &= ~CSIZE;//屏蔽其它标志位
-            options.c_cflag |= CS6;
-            break;
         case 7:
-            options.c_cflag &= ~CSIZE;//屏蔽其它标志位
             options.c_cflag |= CS7;
             break;
         case 8:
-            options.c_cflag &= ~CSIZE;//屏蔽其它标志位
             options.c_cflag |= CS8;
             break;
         default:
-            std::cout << portname << " open failed , unkown databit ." << std::endl;
-            return false;
+            fprintf(stderr,"Unsupported data size\n");
+            return (FALSE);
     }
-
-    // 设置停止位
-    switch(stopbit)
+    switch (parity)
     {
-        case 1:
-            options.c_cflag &= ~CSTOPB;//CSTOPB：使用1位停止位
+        case 'n':
+        case 'N':
+    //        options.c_cflag &= ~PARENB;   /* Clear parity enable */
+    //        options.c_iflag &= ~INPCK;     /* Enable parity checking */
+            options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); /*Input*/
+            options.c_oflag &= ~OPOST;   /*Output*/
             break;
-        case 2:
-            options.c_cflag |= CSTOPB;//CSTOPB：使用2位停止位
+        case 'o':
+        case 'O':
+            options.c_cflag |= (PARODD | PARENB); /* 设置为奇效验*/
+            options.c_iflag |= INPCK;             /* Disnable parity checking */
+            break;
+        case 'e':
+        case 'E':
+            options.c_cflag |= PARENB;     /* Enable parity */
+            options.c_cflag &= ~PARODD;   /* 转换为偶效验*/
+            options.c_iflag |= INPCK;       /* Disnable parity checking */
+            break;
+        case 'S':
+        case 's': /*as no parity*/
+            options.c_cflag &= ~PARENB;
+            options.c_cflag &= ~CSTOPB;
             break;
         default:
-            std::cout << portname << " open failed , unkown stopbit ." << std::endl;
-            return false;
+            fprintf(stderr,"Unsupported parity\n");
+            return (FALSE);
     }
+    /* 设置停止位*/
+    switch (stopbits)
+    {
+        case 1:
+            options.c_cflag &= ~CSTOPB;
+            break;
+        case 2:
+            options.c_cflag |= CSTOPB;
+            break;
+        default:
+            fprintf(stderr,"Unsupported stop bits\n");
+            return (FALSE);
+    }
+    /* Set input parity option */
+    if ((parity != 'n')&&(parity != 'N'))
+        options.c_iflag |= INPCK;
 
-    // 激活新配置
-    if((tcsetattr(pHandle[0],TCSANOW,&options))!=0) 
-    { 
-        std::cout << portname << " open failed , can not complete set attributes ." << std::endl;
-        return false; 
-    } 
+    options.c_cc[VTIME] = 5; // 0.5 seconds
+    options.c_cc[VMIN] = 1;
+    options.c_cflag &= ~HUPCL;
+    options.c_iflag &= ~INPCK;
+    options.c_iflag |= IGNBRK;
+    options.c_iflag &= ~ICRNL;
+    options.c_iflag &= ~IXON;
+    options.c_lflag &= ~IEXTEN;
+    options.c_lflag &= ~ECHOK;
+    options.c_lflag &= ~ECHOCTL;
+    options.c_lflag &= ~ECHOKE;
+    options.c_oflag &= ~ONLCR;
+
+    tcflush(fd,TCIFLUSH); /* Update the options and do it NOW */
+    if (tcsetattr(fd,TCSANOW,&options) != 0)
+    {
+        perror("SetupSerial 3");
+        return false;
+    }
 
     return true;
 }
 
 void WzSerialPort::close()
 {
-    if(pHandle[0] != -1)
+    if(fd_serial != -1)
     {
-        ::close(pHandle[0]);
+        flock(fd_serial,LOCK_UN);
+        ::close(fd_serial);
+        std::cout << "close port!" << std::endl;
     }
 }
 
 int WzSerialPort::send(const void *buf,int len)
 {
     int sendCount = 0;
-    if(pHandle[0] != -1)
+    if(fd_serial != -1)
     {   
         // 将 buf 和 len 转换成api要求的格式
         const char *buffer = (char*)buf;
@@ -178,7 +223,7 @@ int WzSerialPort::send(const void *buf,int len)
 
         while(length > 0)
         {
-            if((tmp = write(pHandle[0], buffer, length)) <= 0)
+            if((tmp = write(fd_serial, buffer, length)) <= 0)
             {
                 if(tmp < 0&&errno == EINTR)
                 {
@@ -201,10 +246,17 @@ int WzSerialPort::send(const void *buf,int len)
 
 int WzSerialPort::receive(void *buf,int maxlen)
 {
-    int receiveCount = ::read(pHandle[0],buf,maxlen);
+    int receiveCount = read(fd_serial,(char*)buf,maxlen);
     if(receiveCount < 0)
     {
         receiveCount = 0;
     }
     return receiveCount;
 }
+
+void WzSerialPort::clear()
+{
+    char buf[256];
+    read(fd_serial,(char*)buf,256);
+}
+
