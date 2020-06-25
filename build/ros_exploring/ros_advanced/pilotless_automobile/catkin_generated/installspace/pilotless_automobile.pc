@@ -1,8 +1,0 @@
-prefix=/home/yang/my_ws/install
-
-Name: pilotless_automobile
-Description: Description of pilotless_automobile
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

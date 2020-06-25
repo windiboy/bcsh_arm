@@ -1,8 +1,0 @@
-prefix=/home/yang/my_ws/devel
-
-Name: my_arm
-Description: Description of my_arm
-Version: 1.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

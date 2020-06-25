@@ -1,8 +1,0 @@
-prefix=/home/yang/my_ws/devel
-
-Name: BCSH_Arm
-Description: Description of BCSH_Arm
-Version: 0.0.0
-Cflags: -I/home/yang/my_ws/devel/include -I/home/yang/my_ws/src/BCSH_Arm/include
-Libs: -L${prefix}/lib 
-Requires: roscpp rospy std_msgs message_runtime actionlib moveit_msgs control_msgs sensor_msgs moveit_visual_tools moveit_core moveit_ros_planning_interface

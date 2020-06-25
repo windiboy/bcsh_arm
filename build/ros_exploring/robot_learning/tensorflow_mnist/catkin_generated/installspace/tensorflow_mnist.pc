@@ -1,8 +1,0 @@
-prefix=/home/yang/my_ws/install
-
-Name: tensorflow_mnist
-Description: Description of tensorflow_mnist
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

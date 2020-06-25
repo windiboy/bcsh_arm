@@ -1,8 +1,0 @@
-prefix=/home/yang/my_ws/devel
-
-Name: pluginlib_tutorials
-Description: Description of pluginlib_tutorials
-Version: 0.1.10
-Cflags: -I/home/yang/my_ws/src/ros_exploring/ros_advanced/pluginlib_tutorials/include -I/usr/include
-Libs: -L${prefix}/lib -lpluginlib_tutorials
-Requires: pluginlib roscpp
