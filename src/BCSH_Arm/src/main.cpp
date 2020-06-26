@@ -16,51 +16,6 @@
 
 using namespace std;
 
-char a[]={0x01,0x02};
-void sendDemo()
-{
-	WzSerialPort w;
-//    w.open("/dev/pts/3", 1000000, 0, 8, 1);
-	MotorDriver m;
-	m.init("/dev/pts/3");
-	cout << m.enable(0x01) << endl;
-    cout << m.pos_control(0x01,1.57,40) << endl;
-
-
-//	if (w.open("/dev/pts/3", 1000000, 0, 8, 1))
-//	{
-//
-//        result = ((a[0]+a[1])&0xff)^0xff;
-//        cout <<  result << endl;
-//        w.send(&result, 1);
-////		for (int i = 0;i < 10;i++)
-////		{
-////			w.send("data", 10);
-////
-////		}
-//		cout << "send demo finished..."<<endl;
-//		w.close();
-//	}
-//	else
-//	{
-//		cout << "open serial port failed...";
-//	}
-}
-
-void receiveDemo()
-{
-	WzSerialPort w;
-	if (w.open("/dev/pts/1", 9600, 0, 8, 1))
-	{
-		char buf[1024];
-		while (true)
-		{
-			memset(buf, 0,1024);
-			w.receive(buf, 1024);
-			cout<<buf;
-		}
-	}
-}
 
 void test1(){
     double x_data[POINTS_COUNT] = {0, 0.422955130, 0.598557636, 0.734591320, 0.850603738, 0.953558869, 1.056514000, 1.159469131, 1.274332912, 1.409208218, 1.585026197, 2};
@@ -112,13 +67,11 @@ void display(){
 int main(int argumentCount, const char* argumentValues[]) 
 {
 	// 假设 /dev/ttyS1 已经和另外一个串口连接好了
-    test1();
+	double target[5] = {1,2,3,4,5};
+    for(int i=0;i<5;i++)
+        cout << setfill(' ') << setw(10) << target[i];
+//    test1();
     //display();
-	// 发送 demo
-	//sendDemo();
-
-	// 接收 demo
-	//receiveDemo();
 
 	return 0;
 } 

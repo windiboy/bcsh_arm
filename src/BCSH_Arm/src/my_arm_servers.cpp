@@ -8,6 +8,7 @@
 #include <sensor_msgs/JointState.h>
 #include "../include/cubicSpline.h"
 #include "../include/MotorDriver.h"
+#include "../include/ArmDriver.h"
 
 #include <iostream>
 #include <vector>
@@ -17,13 +18,13 @@ using namespace std;
 
 cubicSpline spline0,spline1,spline2,spline3;
 //定义四个电机
-MotorDriver m1,m2,m3,m4;
+ArmDriver arm;
 //画图所需参数
 Gnuplot gp;
 string port;
 
 
-class ArmDriver
+class ArmService
 {
 protected:
 
@@ -42,11 +43,13 @@ protected:
 
 public:
 
-    ArmDriver(std::string name) :
-            as_(nh_, name, boost::bind(&ArmDriver::goalCB, this, _1), false),
+    ArmService(std::string name) :
+            as_(nh_, name, boost::bind(&ArmService::goalCB, this, _1), false),
             action_name_(name)
     {
         as_.start();
+        arm.connect_check();
+        arm.motor_init();
     }
 
     void goalCB( actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> gh)
@@ -82,15 +85,14 @@ public:
         //插值所需变量
         double x_out = 0;
         double y0 = 0, y1=0, y2=0, y3=0;
+        double target[5];
 
         std::vector<std::pair<double, double> > data_out,data_in;
         //画插值之前的路径点
         for(int i=0; i<=len; i++){
             data_in.push_back(std::make_pair(data_x[i], data1[i]));
         }
-        nh_.getParam("send_port",port);
-        //初始化电机，打开串口
-        m1.init(&port[0]);
+
         //三次曲线插值
         spline0.loadData(data_x, data0, len, 0, 0, cubicSpline::BoundType_First_Derivative);
         spline1.loadData(data_x, data1, len, 0, 0, cubicSpline::BoundType_First_Derivative);
@@ -98,23 +100,33 @@ public:
         spline3.loadData(data_x, data3, len, 0, 0, cubicSpline::BoundType_First_Derivative);
 
         //按周期发送给电机
-        x_out = -0.004;
+        x_out = -0.04;
         while ((abs(y0-data0[len-1])>0.002)||(abs(y1-data1[len-1])>0.002)||(abs(y2-data2[len-1])>0.002)||(abs(y3-data3[len-1])>0.002))
         {
-            x_out = x_out + 0.004;
+            x_out = x_out + 0.04;
             //取得插值的y值
             spline0.getYbyX(x_out, y0);
             spline1.getYbyX(x_out, y1);
             spline2.getYbyX(x_out, y2);
             spline3.getYbyX(x_out, y3);
+
+            //发送给电机
+            target[0] = -y1;
+            target[1] = y2;
+            target[2] = y3;
+            target[3] = 1;
+            target[4] = y0;
+
+            for(int i=0;i<5;i++)
+                cout << setfill(' ') << setw(20) << target[i];
+            cout << endl;
+
+            arm.write_angle(target);
+
             //画插值之后的曲线
             data_out.push_back(std::make_pair(x_out, y1));
-//            printf("%f, %0.9f \n", x_out, y_out);
-            //串口发送位置，假设电机id为1 2 3 4
-            m1.pos_control(0x01,y0,40);
-            m2.pos_control(0x02,y1,40);
-            m3.pos_control(0x03,y2,40);
-            m4.pos_control(0x04,y3,40);
+
+
         }
         joint_state.position[0] = y0;
         joint_state.position[1] = y1;
@@ -123,8 +135,8 @@ public:
         //send the joint state
         Pub_joint.publish(joint_state);
         //画图显示
-        gp << "plot" << gp.file1d(data_out) << "with lines title 'position[0].out',"
-           << gp.file1d(data_in) << "with points title 'position[0].in'" << endl;
+//        gp << "plot" << gp.file1d(data_out) << "with lines title 'position[0].out',"
+//           << gp.file1d(data_in) << "with points title 'position[0].in'" << endl;
 
         //告诉客户端成功了
         goal_handle_.setAccepted();
@@ -138,7 +150,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "arm_driver");
 
-    ArmDriver armdriver("my_arm_controller/follow_joint_trajectory");
+    ArmService armservice("my_arm_controller/follow_joint_trajectory");
     ros::spin();
 
     return 0;

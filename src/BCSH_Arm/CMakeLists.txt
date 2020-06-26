@@ -147,7 +147,7 @@ add_executable(top_controllers src/top_controllers.cpp)
 target_link_libraries(top_controllers ${catkin_LIBRARIES} cubicSpline MotorDriver WzSerialPort)
 
 add_executable(my_arm_servers src/my_arm_servers.cpp)
-target_link_libraries(my_arm_servers ${catkin_LIBRARIES} cubicSpline MotorDriver WzSerialPort)
+target_link_libraries(my_arm_servers ${catkin_LIBRARIES} cubicSpline MotorDriver WzSerialPort ArmDriver)
 add_dependencies(my_arm_servers ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 
 add_executable(main src/main.cpp)
